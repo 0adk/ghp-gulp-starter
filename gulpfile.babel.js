@@ -25,7 +25,7 @@ gulp.task("assets", function() {
 
 gulp.task("html", function() {
   return gulp
-    .src("./src/content/**/*.html")
+    .src("./src/html/**/*.html")
     .pipe(plumber(errorHandler))
     .pipe(gulp.dest("./dist/"));
 });
@@ -86,7 +86,7 @@ gulp.task(
       open: true // set to false to disable browser autostart
     });
     gulp.watch("src/scss/**/*", gulp.series("sass"));
-    gulp.watch("src/content/**/*.html", gulp.series("html"));
+    gulp.watch("src/html/**/*.html", gulp.series("html"));
     gulp.watch("src/pwa/**/*", gulp.series("pwa"));
     gulp.watch("src/js/*.js", gulp.series("js"));
     gulp.watch("src/assets/**/*", gulp.series("assets"));
