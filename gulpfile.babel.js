@@ -9,8 +9,11 @@ import sourcemaps from "gulp-sourcemaps";
 import notify from "gulp-notify";
 import plumber from "gulp-plumber";
 import webpack from "webpack-stream";
+import nunjucksRender from "gulp-nunjucks-render";
+import htmlmin from "gulp-htmlmin";
 
 sass.compiler = require("node-sass");
+
 
 const errorHandler = err => {
   notify.onError({
@@ -23,12 +26,34 @@ gulp.task("assets", function() {
   return gulp.src("./src/assets/**/*").pipe(gulp.dest("./dist/assets/"));
 });
 
-gulp.task("html", function() {
-  return gulp
-    .src("./src/html/pages/*.html")
-    .pipe(plumber(errorHandler))
-    .pipe(gulp.dest("./dist/"));
+// gulp.task("html", function() {
+//   return gulp
+//     .src("./src/html/pages/*.html")
+//     .pipe(plumber(errorHandler))
+//     .pipe(gulp.dest("./dist/"));
+// });
+
+gulp.task('nunjucks', function() {
+  return gulp.src('./src/html/pages/**/*.+(html|nunjucks)')
+    .pipe(nunjucksRender({
+      path: ['./src/html/templates']
+    }))
+    .pipe(htmlmin(
+      {
+        collapseWhitespace: true,
+        removeComments: true
+      }))
+    .pipe(gulp.dest('./dist/'))
 });
+
+// Create a task that ensures the `nunjucks` task is complete before reloading browsers.
+gulp.task(
+  "nunjucks-html-watch",
+  gulp.series("nunjucks", function(done) {
+    browserSync.reload();
+    done();
+  })
+);
 
 gulp.task("pwa", function() {
   return gulp
@@ -80,13 +105,13 @@ gulp.task("sass", () => {
 
 gulp.task(
   "serve",
-  gulp.series("sass", "html", "js", "assets", "pwa", function() {
+  gulp.series("sass", "nunjucks-html-watch", "js", "assets", "pwa", function() {
     browserSync.init({
       server: "./dist",
       open: true // set to false to disable browser autostart
     });
     gulp.watch("src/scss/**/*", gulp.series("sass"));
-    gulp.watch("src/html/pages/*.html", gulp.series("html"));
+    gulp.watch("src/html/pages/*.html", gulp.series("nunjucks-html-watch"));
     gulp.watch("src/pwa/**/*", gulp.series("pwa"));
     gulp.watch("src/js/*.js", gulp.series("js"));
     gulp.watch("src/assets/**/*", gulp.series("assets"));
@@ -94,5 +119,5 @@ gulp.task(
   })
 );
 
-gulp.task("build", gulp.series("sass", "html", "js", "assets", "pwa"));
+gulp.task("build", gulp.series("sass", "nunjucks", "js", "assets", "pwa"));
 gulp.task("default", gulp.series("serve"));
